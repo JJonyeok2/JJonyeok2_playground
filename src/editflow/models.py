@@ -4,6 +4,36 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+@dataclass(frozen=True)
+class ChatBucket:
+    """Chat messages grouped by playback second."""
+    second: int
+    messages: list[str]
+
+    @property
+    def message_count(self) -> int:
+        """Return the number of messages in the bucket."""
+        return len(self.messages)
+
+    @property
+    def laugh_count(self) -> int:
+        """Return the number of messages containing Korean laugh tokens."""
+        return sum(1 for message in self.messages if "ㅋ" in message)
+
+
+@dataclass(frozen=True)
+class HeatmapPoint:
+    """Replay heatmap score at a playback second."""
+    second: int
+    score: float
+
+    def __post_init__(self) -> None:
+        """Validate that heatmap scores are normalized."""
+        if not 0 <= self.score <= 1:
+            message = "heatmap score must be between 0 and 1"
+            raise ValueError(message)
+
+
 class MarkerGrade(Enum):
     """Marker grade enumeration."""
     S = "S"
