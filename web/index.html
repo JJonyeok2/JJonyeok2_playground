@@ -52,6 +52,26 @@
               Overlap sec
               <input id="overlapSeconds" type="number" min="0" value="5" />
             </label>
+            <label>
+              Merge sec
+              <input id="peakMergeSeconds" type="number" min="0" value="2" />
+            </label>
+            <label>
+              Max markers
+              <input id="maxMarkers" type="number" min="1" value="20" />
+            </label>
+            <label>
+              Min gap sec
+              <input id="minMarkerGapSeconds" type="number" min="0" value="8" />
+            </label>
+            <label>
+              Pre-roll sec
+              <input id="preRollSeconds" type="number" min="0" value="2" />
+            </label>
+            <label>
+              Marker length
+              <input id="markerDurationSeconds" type="number" min="1" value="5" />
+            </label>
           </div>
           <button id="analyzeButton" class="primary-button" type="button">Analyze markers</button>
         </section>
@@ -109,6 +129,6 @@
       </aside>
     </main>
 
-    <script src="./app.js"></script>
+    <script type="module" src="./src/main.js"></script>
   </body>
 </html>

@@ -16,6 +16,11 @@ def test_workbench_has_editor_focused_layout():
         'id="minLaughs"',
         'id="minHeatmapScore"',
         'id="overlapSeconds"',
+        'id="peakMergeSeconds"',
+        'id="maxMarkers"',
+        'id="minMarkerGapSeconds"',
+        'id="preRollSeconds"',
+        'id="markerDurationSeconds"',
         'id="analyzeButton"',
         'id="videoPreview"',
         'id="timeline"',
@@ -29,44 +34,85 @@ def test_workbench_has_editor_focused_layout():
 
     assert "Premiere XML" in html
     assert "Final Cut" not in html
+    assert '<script type="module" src="./src/main.js"></script>' in html
 
 
-def test_workbench_script_supports_local_analysis_and_exports():
-    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+def test_workbench_uses_modular_frontend_scripts():
+    module_exports = {
+        "web/src/api.js": [
+            "export async function requestBackendAnalysis",
+            "export function applyBackendResult",
+        ],
+        "web/src/analysis.js": [
+            "export function detectChatPeaks",
+            "export function detectHeatmapPeaks",
+            "export function buildMarkers",
+            "export function runLocalAnalysis",
+        ],
+        "web/src/data.js": [
+            "export async function parseDataFile",
+            "export function parseCsv",
+        ],
+        "web/src/render.js": [
+            "export function renderTimeline",
+            "export function renderMarkerTable",
+        ],
+        "web/src/exporters.js": [
+            "export function exportMarkersAsCsv",
+            "export function exportMarkersAsXml",
+            "export function buildPremiereXmlText",
+            "export function buildCsvText",
+        ],
+    }
 
-    required_functions = [
-        "function parseDataFile",
-        "function parseCsv",
-        "function detectChatPeaks",
-        "function detectHeatmapPeaks",
-        "function buildMarkers",
-        "function renderTimeline",
-        "function exportMarkersAsCsv",
-        "function exportMarkersAsXml",
-    ]
+    for module_path, required_exports in module_exports.items():
+        script = (ROOT / module_path).read_text(encoding="utf-8")
+        for exported_symbol in required_exports:
+            assert exported_symbol in script
 
-    for function_name in required_functions:
-        assert function_name in script
-
-    assert "Premiere Pro" in script
-    assert "<xmeml" in script
+    main_script = (ROOT / "web" / "src" / "main.js").read_text(encoding="utf-8")
+    assert 'from "./api.js"' in main_script
+    assert 'from "./analysis.js"' in main_script
+    assert 'from "./data.js"' in main_script
+    assert 'from "./render.js"' in main_script
 
 
-def test_workbench_script_calls_backend_analysis_api_with_fallback():
-    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+def test_workbench_api_payload_includes_marker_postprocessing_options():
+    script = (ROOT / "web" / "src" / "api.js").read_text(encoding="utf-8")
 
-    required_backend_hooks = [
-        "const API_BASE_URL",
-        "async function requestBackendAnalysis",
-        "function applyBackendResult",
-        "function runLocalAnalysis",
+    required_payload_fields = [
+        'API_BASE_URL = "http://127.0.0.1:8000"',
         "fetch(`${API_BASE_URL}/analyze`",
+        "peak_merge_seconds",
+        "max_markers",
+        "min_marker_gap_seconds",
+        "pre_roll_seconds",
+        "marker_duration_seconds",
     ]
 
-    for hook in required_backend_hooks:
-        assert hook in script
+    for payload_field in required_payload_fields:
+        assert payload_field in script
 
-    assert 'const API_BASE_URL = "http://127.0.0.1:8000";' in script
+
+def test_workbench_scripts_keep_backend_fallback_and_premiere_exports():
+    main_script = (ROOT / "web" / "src" / "main.js").read_text(encoding="utf-8")
+    analysis_script = (ROOT / "web" / "src" / "analysis.js").read_text(encoding="utf-8")
+    exporter_script = (ROOT / "web" / "src" / "exporters.js").read_text(
+        encoding="utf-8",
+    )
+
+    required_fallback_hooks = [
+        "async function runAnalysis",
+        "requestBackendAnalysis",
+        "function runLocalAnalysis",
+        "EditFlow API unavailable. Falling back to browser analysis.",
+    ]
+
+    for hook in required_fallback_hooks:
+        assert hook in main_script or hook in analysis_script
+
+    assert "Premiere Pro" in exporter_script
+    assert "<xmeml" in exporter_script
 
 
 def test_workbench_styles_use_dense_panels_not_landing_sections():
