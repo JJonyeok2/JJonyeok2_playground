@@ -32,6 +32,7 @@ class AnalyzeRequest(BaseModel):
     min_laughs: int = Field(default=2, ge=1)
     min_heatmap_score: float = Field(default=0.75, ge=0, le=1)
     overlap_seconds: int = Field(default=5, ge=0)
+    peak_merge_seconds: int = Field(default=2, ge=0)
     max_markers: Optional[int] = Field(default=None, ge=1)  # noqa: UP045
     min_marker_gap_seconds: int = Field(default=0, ge=0)
     pre_roll_seconds: int = Field(default=0, ge=0)
@@ -80,6 +81,7 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 min_laughs=request.min_laughs,
                 min_heatmap_score=request.min_heatmap_score,
                 overlap_seconds=request.overlap_seconds,
+                peak_merge_seconds=request.peak_merge_seconds,
                 max_markers=request.max_markers,
                 min_marker_gap_seconds=request.min_marker_gap_seconds,
                 pre_roll_seconds=request.pre_roll_seconds,

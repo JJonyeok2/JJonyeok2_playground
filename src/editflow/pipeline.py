@@ -31,6 +31,7 @@ class AnalysisSettings:
     min_laughs: int = 2
     min_heatmap_score: float = 0.75
     overlap_seconds: int = 5
+    peak_merge_seconds: int = 2
     max_markers: int | None = None
     min_marker_gap_seconds: int = 0
     pre_roll_seconds: int = 0
@@ -70,10 +71,12 @@ def run_analysis(
         chat_buckets,
         min_messages=resolved_settings.min_messages,
         min_laughs=resolved_settings.min_laughs,
+        merge_gap_seconds=resolved_settings.peak_merge_seconds,
     )
     heatmap_peaks = detect_heatmap_peaks(
         heatmap_points,
         min_score=resolved_settings.min_heatmap_score,
+        merge_gap_seconds=resolved_settings.peak_merge_seconds,
     )
     markers = build_markers(
         chat_peaks=chat_peaks,

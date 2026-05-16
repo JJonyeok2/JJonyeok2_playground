@@ -77,7 +77,7 @@ def test_analyze_command_accepts_marker_limit_options(tmp_path):
 
     assert result.exit_code == 0, result.output
     assert "Generated 1 markers" in result.output
-    assert "10,00:00:10:00,S,purple" in csv_text
+    assert "12,00:00:12:00,S,purple" in csv_text
     assert "40,A,red" not in csv_text
 
 
@@ -110,6 +110,44 @@ def test_analyze_command_accepts_xml_window_options(tmp_path):
     assert result.exit_code == 0, result.output
     assert "<in>240</in>" in xml_text
     assert "<out>390</out>" in xml_text
+
+
+def test_analyze_command_accepts_peak_merge_option(tmp_path):
+    chat_path = tmp_path / "chat.csv"
+    heatmap_path = tmp_path / "heatmap.csv"
+    output_dir = tmp_path / "out"
+    chat_path.write_text(
+        (
+            "second,message\n"
+            "10,ㅋㅋ\n10,ㅋㅋㅋ\n10,미쳤다\n"
+            "12,ㅋㅋ\n12,ㅋㅋㅋ\n12,레전드\n"
+            "40,ㅋㅋ\n40,ㅋㅋㅋ\n40,좋다\n"
+        ),
+        encoding="utf-8",
+    )
+    heatmap_path.write_text("second,score\n11,0.9\n12,0.95\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "analyze",
+            "--chat",
+            str(chat_path),
+            "--heatmap",
+            str(heatmap_path),
+            "--out",
+            str(output_dir),
+            "--peak-merge-seconds",
+            "5",
+        ],
+    )
+
+    csv_text = (output_dir / "editflow_markers.csv").read_text(encoding="utf-8")
+
+    assert result.exit_code == 0, result.output
+    assert "Generated 2 markers" in result.output
+    assert "12,00:00:12:00,S,purple" in csv_text
+    assert "40,00:00:40:00,A,red" in csv_text
 
 
 def test_analyze_command_reports_invalid_input_without_traceback(tmp_path):

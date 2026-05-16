@@ -51,6 +51,7 @@ PYTHONPATH=src JJonyeok2/bin/python -m editflow.cli analyze \
   --heatmap examples/heatmap.csv \
   --out outputs \
   --max-markers 20 \
+  --peak-merge-seconds 2 \
   --min-marker-gap-seconds 8 \
   --pre-roll-seconds 2 \
   --marker-duration-seconds 5
@@ -83,6 +84,7 @@ curl -X POST http://127.0.0.1:8000/analyze \
     "heatmap_filename": "heatmap.csv",
     "fps": 30,
     "max_markers": 20,
+    "peak_merge_seconds": 2,
     "min_marker_gap_seconds": 8,
     "pre_roll_seconds": 2,
     "marker_duration_seconds": 5

@@ -68,6 +68,12 @@ OVERLAP_SECONDS_OPTION = typer.Option(
     min=0,
     help="Window for S marker overlap.",
 )
+PEAK_MERGE_SECONDS_OPTION = typer.Option(
+    2,
+    "--peak-merge-seconds",
+    min=0,
+    help="Merge same-source peaks within this many seconds.",
+)
 MAX_MARKERS_OPTION = typer.Option(
     None,
     "--max-markers",
@@ -109,6 +115,7 @@ def analyze(  # noqa: PLR0913
     min_laughs: int = MIN_LAUGHS_OPTION,
     min_heatmap_score: float = MIN_HEATMAP_SCORE_OPTION,
     overlap_seconds: int = OVERLAP_SECONDS_OPTION,
+    peak_merge_seconds: int = PEAK_MERGE_SECONDS_OPTION,
     max_markers: Optional[int] = MAX_MARKERS_OPTION,  # noqa: UP045
     min_marker_gap_seconds: int = MIN_MARKER_GAP_SECONDS_OPTION,
     pre_roll_seconds: int = PRE_ROLL_SECONDS_OPTION,
@@ -126,6 +133,7 @@ def analyze(  # noqa: PLR0913
                 min_laughs=min_laughs,
                 min_heatmap_score=min_heatmap_score,
                 overlap_seconds=overlap_seconds,
+                peak_merge_seconds=peak_merge_seconds,
                 max_markers=max_markers,
                 min_marker_gap_seconds=min_marker_gap_seconds,
                 pre_roll_seconds=pre_roll_seconds,
