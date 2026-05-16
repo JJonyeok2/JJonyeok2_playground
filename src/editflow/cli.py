@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 import typer
 
@@ -67,6 +68,18 @@ OVERLAP_SECONDS_OPTION = typer.Option(
     min=0,
     help="Window for S marker overlap.",
 )
+MAX_MARKERS_OPTION = typer.Option(
+    None,
+    "--max-markers",
+    min=1,
+    help="Maximum marker count to export.",
+)
+MIN_MARKER_GAP_SECONDS_OPTION = typer.Option(
+    0,
+    "--min-marker-gap-seconds",
+    min=0,
+    help="Minimum seconds between exported markers.",
+)
 
 
 @app.callback()
@@ -84,6 +97,8 @@ def analyze(  # noqa: PLR0913
     min_laughs: int = MIN_LAUGHS_OPTION,
     min_heatmap_score: float = MIN_HEATMAP_SCORE_OPTION,
     overlap_seconds: int = OVERLAP_SECONDS_OPTION,
+    max_markers: Optional[int] = MAX_MARKERS_OPTION,  # noqa: UP045
+    min_marker_gap_seconds: int = MIN_MARKER_GAP_SECONDS_OPTION,
 ) -> None:
     """Analyze chat and replay heatmap files, then write Premiere XML and CSV."""
     result = run_pipeline(
@@ -96,6 +111,8 @@ def analyze(  # noqa: PLR0913
             min_laughs=min_laughs,
             min_heatmap_score=min_heatmap_score,
             overlap_seconds=overlap_seconds,
+            max_markers=max_markers,
+            min_marker_gap_seconds=min_marker_gap_seconds,
         ),
     )
     typer.echo(f"Generated {result.marker_count} markers")

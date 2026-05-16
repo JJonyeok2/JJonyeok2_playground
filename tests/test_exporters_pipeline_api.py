@@ -55,6 +55,28 @@ def test_run_analysis_from_text_returns_markers_and_export_text():
     assert "S급 하이라이트" in result.csv_text
 
 
+def test_run_analysis_from_text_applies_marker_limits():
+    result = run_analysis_from_text(
+        chat_text=(
+            "second,message\n"
+            "10,ㅋㅋ\n10,ㅋㅋㅋ\n10,미쳤다\n"
+            "12,ㅋㅋ\n12,ㅋㅋㅋ\n12,레전드\n"
+            "40,ㅋㅋ\n40,ㅋㅋㅋ\n40,좋다\n"
+        ),
+        chat_filename="chat.csv",
+        heatmap_text="second,score\n11,0.9\n",
+        heatmap_filename="heatmap.csv",
+        settings=AnalysisSettings(
+            max_markers=1,
+            min_marker_gap_seconds=5,
+        ),
+    )
+
+    assert result.marker_count == 1
+    assert result.markers[0].second == 10
+    assert result.markers[0].grade == MarkerGrade.S
+
+
 def test_api_analyze_endpoint_accepts_uploaded_file_texts():
     route_paths = {route.path for route in api.routes}
     result = analyze(
@@ -76,3 +98,24 @@ def test_api_analyze_endpoint_accepts_uploaded_file_texts():
     assert result.markers[0].grade == "S"
     assert result.xml_text.startswith("<?xml")
     assert "S급 하이라이트" in result.csv_text
+
+
+def test_api_analyze_endpoint_accepts_marker_limit_settings():
+    result = analyze(
+        AnalyzeRequest(
+            chat_text=(
+                "second,message\n"
+                "10,ㅋㅋ\n10,ㅋㅋㅋ\n10,미쳤다\n"
+                "12,ㅋㅋ\n12,ㅋㅋㅋ\n12,레전드\n"
+                "40,ㅋㅋ\n40,ㅋㅋㅋ\n40,좋다\n"
+            ),
+            chat_filename="chat.csv",
+            heatmap_text="second,score\n11,0.9\n",
+            heatmap_filename="heatmap.csv",
+            max_markers=1,
+            min_marker_gap_seconds=5,
+        )
+    )
+
+    assert result.marker_count == 1
+    assert result.markers[0].second == 10

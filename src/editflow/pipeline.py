@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from editflow.analysis.markers import build_markers
 from editflow.analysis.peaks import detect_chat_peaks, detect_heatmap_peaks
+from editflow.analysis.postprocess import select_markers
 from editflow.exporters.csv_report import build_marker_csv, write_marker_csv
 from editflow.exporters.premiere_xml import build_premiere_xml
 from editflow.ingest.chat import load_chat_buckets, load_chat_buckets_from_text
@@ -30,6 +31,8 @@ class AnalysisSettings:
     min_laughs: int = 2
     min_heatmap_score: float = 0.75
     overlap_seconds: int = 5
+    max_markers: int | None = None
+    min_marker_gap_seconds: int = 0
 
 
 @dataclass(frozen=True)
@@ -75,10 +78,15 @@ def run_analysis(
         heatmap_peaks=heatmap_peaks,
         overlap_seconds=resolved_settings.overlap_seconds,
     )
+    selected_markers = select_markers(
+        markers,
+        min_gap_seconds=resolved_settings.min_marker_gap_seconds,
+        max_markers=resolved_settings.max_markers,
+    )
     return AnalysisResult(
-        markers=markers,
-        xml_text=build_premiere_xml(markers, fps=resolved_settings.fps),
-        csv_text=build_marker_csv(markers),
+        markers=selected_markers,
+        xml_text=build_premiere_xml(selected_markers, fps=resolved_settings.fps),
+        csv_text=build_marker_csv(selected_markers),
     )
 
 
