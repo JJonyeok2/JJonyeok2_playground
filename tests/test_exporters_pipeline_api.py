@@ -29,6 +29,25 @@ def test_build_premiere_xml_contains_sequence_markers():
     assert "<in>300</in>" in xml_text
 
 
+def test_build_premiere_xml_supports_preroll_and_duration():
+    marker = Marker.from_grade(
+        second=10,
+        grade=MarkerGrade.S,
+        evidence=["chat_peak", "heatmap_peak"],
+        confidence=0.95,
+    )
+
+    xml_text = build_premiere_xml(
+        [marker],
+        fps=30,
+        pre_roll_seconds=2,
+        marker_duration_seconds=5,
+    )
+
+    assert "<in>240</in>" in xml_text
+    assert "<out>390</out>" in xml_text
+
+
 def test_build_marker_csv_outputs_sidecar_report():
     marker = Marker.from_grade(
         second=65,
@@ -80,6 +99,23 @@ def test_run_analysis_from_text_applies_marker_limits():
     assert result.markers[0].grade == MarkerGrade.S
 
 
+def test_run_analysis_from_text_applies_xml_window_settings():
+    result = run_analysis_from_text(
+        chat_text=CHAT_TEXT,
+        chat_filename="chat.csv",
+        heatmap_text=HEATMAP_TEXT,
+        heatmap_filename="heatmap.csv",
+        settings=AnalysisSettings(
+            fps=30,
+            pre_roll_seconds=2,
+            marker_duration_seconds=5,
+        ),
+    )
+
+    assert "<in>240</in>" in result.xml_text
+    assert "<out>390</out>" in result.xml_text
+
+
 def test_api_analyze_endpoint_accepts_uploaded_file_texts():
     route_paths = {route.path for route in api.routes}
     result = analyze(
@@ -122,6 +158,22 @@ def test_api_analyze_endpoint_accepts_marker_limit_settings():
 
     assert result.marker_count == 1
     assert result.markers[0].second == 10
+
+
+def test_api_analyze_endpoint_accepts_xml_window_settings():
+    result = analyze(
+        AnalyzeRequest(
+            chat_text=CHAT_TEXT,
+            chat_filename="chat.csv",
+            heatmap_text=HEATMAP_TEXT,
+            heatmap_filename="heatmap.csv",
+            pre_roll_seconds=2,
+            marker_duration_seconds=5,
+        )
+    )
+
+    assert "<in>240</in>" in result.xml_text
+    assert "<out>390</out>" in result.xml_text
 
 
 def test_api_analyze_endpoint_returns_bad_request_for_invalid_input():

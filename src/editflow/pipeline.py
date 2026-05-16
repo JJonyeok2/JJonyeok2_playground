@@ -33,6 +33,8 @@ class AnalysisSettings:
     overlap_seconds: int = 5
     max_markers: int | None = None
     min_marker_gap_seconds: int = 0
+    pre_roll_seconds: int = 0
+    marker_duration_seconds: int = 1
 
 
 @dataclass(frozen=True)
@@ -85,7 +87,12 @@ def run_analysis(
     )
     return AnalysisResult(
         markers=selected_markers,
-        xml_text=build_premiere_xml(selected_markers, fps=resolved_settings.fps),
+        xml_text=build_premiere_xml(
+            selected_markers,
+            fps=resolved_settings.fps,
+            pre_roll_seconds=resolved_settings.pre_roll_seconds,
+            marker_duration_seconds=resolved_settings.marker_duration_seconds,
+        ),
         csv_text=build_marker_csv(selected_markers, fps=resolved_settings.fps),
     )
 

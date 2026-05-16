@@ -80,6 +80,18 @@ MIN_MARKER_GAP_SECONDS_OPTION = typer.Option(
     min=0,
     help="Minimum seconds between exported markers.",
 )
+PRE_ROLL_SECONDS_OPTION = typer.Option(
+    0,
+    "--pre-roll-seconds",
+    min=0,
+    help="Seconds to start Premiere markers before the detected peak.",
+)
+MARKER_DURATION_SECONDS_OPTION = typer.Option(
+    1,
+    "--marker-duration-seconds",
+    min=1,
+    help="Duration of each exported Premiere marker.",
+)
 
 
 @app.callback()
@@ -99,6 +111,8 @@ def analyze(  # noqa: PLR0913
     overlap_seconds: int = OVERLAP_SECONDS_OPTION,
     max_markers: Optional[int] = MAX_MARKERS_OPTION,  # noqa: UP045
     min_marker_gap_seconds: int = MIN_MARKER_GAP_SECONDS_OPTION,
+    pre_roll_seconds: int = PRE_ROLL_SECONDS_OPTION,
+    marker_duration_seconds: int = MARKER_DURATION_SECONDS_OPTION,
 ) -> None:
     """Analyze chat and replay heatmap files, then write Premiere XML and CSV."""
     try:
@@ -114,6 +128,8 @@ def analyze(  # noqa: PLR0913
                 overlap_seconds=overlap_seconds,
                 max_markers=max_markers,
                 min_marker_gap_seconds=min_marker_gap_seconds,
+                pre_roll_seconds=pre_roll_seconds,
+                marker_duration_seconds=marker_duration_seconds,
             ),
         )
     except ValueError as error:

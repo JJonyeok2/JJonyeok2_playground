@@ -81,6 +81,37 @@ def test_analyze_command_accepts_marker_limit_options(tmp_path):
     assert "40,A,red" not in csv_text
 
 
+def test_analyze_command_accepts_xml_window_options(tmp_path):
+    chat_path = tmp_path / "chat.csv"
+    heatmap_path = tmp_path / "heatmap.csv"
+    output_dir = tmp_path / "out"
+    chat_path.write_text(CHAT_TEXT, encoding="utf-8")
+    heatmap_path.write_text(HEATMAP_TEXT, encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "analyze",
+            "--chat",
+            str(chat_path),
+            "--heatmap",
+            str(heatmap_path),
+            "--out",
+            str(output_dir),
+            "--pre-roll-seconds",
+            "2",
+            "--marker-duration-seconds",
+            "5",
+        ],
+    )
+
+    xml_text = (output_dir / "editflow_markers.xml").read_text(encoding="utf-8")
+
+    assert result.exit_code == 0, result.output
+    assert "<in>240</in>" in xml_text
+    assert "<out>390</out>" in xml_text
+
+
 def test_analyze_command_reports_invalid_input_without_traceback(tmp_path):
     chat_path = tmp_path / "chat.csv"
     heatmap_path = tmp_path / "heatmap.csv"

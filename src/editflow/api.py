@@ -34,6 +34,8 @@ class AnalyzeRequest(BaseModel):
     overlap_seconds: int = Field(default=5, ge=0)
     max_markers: Optional[int] = Field(default=None, ge=1)  # noqa: UP045
     min_marker_gap_seconds: int = Field(default=0, ge=0)
+    pre_roll_seconds: int = Field(default=0, ge=0)
+    marker_duration_seconds: int = Field(default=1, ge=1)
 
 
 class MarkerResponse(BaseModel):
@@ -80,6 +82,8 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                 overlap_seconds=request.overlap_seconds,
                 max_markers=request.max_markers,
                 min_marker_gap_seconds=request.min_marker_gap_seconds,
+                pre_roll_seconds=request.pre_roll_seconds,
+                marker_duration_seconds=request.marker_duration_seconds,
             ),
         )
     except ValueError as error:
