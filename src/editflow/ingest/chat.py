@@ -9,6 +9,8 @@ from pathlib import Path
 
 from editflow.models import ChatBucket
 
+REQUIRED_COLUMNS = {"second", "message"}
+
 
 def load_chat_buckets(path: Path) -> list[ChatBucket]:
     """Load chat rows from CSV or JSON and group them by second."""
@@ -23,8 +25,13 @@ def load_chat_buckets_from_text(text: str, filename: str) -> list[ChatBucket]:
 def _rows_to_buckets(rows: list[dict[str, object]]) -> list[ChatBucket]:
     grouped: dict[int, list[str]] = defaultdict(list)
 
-    for row in rows:
-        second = int(row["second"])
+    for row_number, row in enumerate(rows, start=1):
+        _validate_columns(row, "chat", row_number)
+        try:
+            second = int(row["second"])
+        except (TypeError, ValueError) as error:
+            message = f"chat row {row_number} second must be an integer"
+            raise ValueError(message) from error
         message = str(row["message"]).strip()
         if message:
             grouped[second].append(message)
@@ -43,7 +50,9 @@ def _read_rows(path: Path) -> list[dict[str, object]]:
 def _read_rows_from_text(text: str, filename: str) -> list[dict[str, object]]:
     suffix = Path(filename).suffix.lower()
     if suffix == ".csv":
-        return list(csv.DictReader(text.splitlines()))
+        reader = csv.DictReader(text.splitlines())
+        _validate_header(reader.fieldnames, "chat")
+        return list(reader)
     if suffix == ".json":
         data = json.loads(text)
         if not isinstance(data, list):
@@ -51,4 +60,21 @@ def _read_rows_from_text(text: str, filename: str) -> list[dict[str, object]]:
             raise ValueError(message)
         return data
     message = f"unsupported chat file extension: {suffix}"
+    raise ValueError(message)
+
+
+def _validate_header(fieldnames: list[str] | None, label: str) -> None:
+    columns = set(fieldnames or [])
+    if not REQUIRED_COLUMNS.issubset(columns):
+        _raise_missing_columns(label)
+
+
+def _validate_columns(row: dict[str, object], label: str, row_number: int) -> None:
+    if not REQUIRED_COLUMNS.issubset(row):
+        _raise_missing_columns(label, row_number)
+
+
+def _raise_missing_columns(label: str, row_number: int | None = None) -> None:
+    target = f"{label} row {row_number}" if row_number is not None else f"{label} rows"
+    message = f"{target} must include columns: {', '.join(sorted(REQUIRED_COLUMNS))}"
     raise ValueError(message)

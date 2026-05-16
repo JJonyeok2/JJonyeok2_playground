@@ -23,3 +23,19 @@ def test_load_heatmap_rejects_score_outside_normalized_range(tmp_path: Path):
 
     with pytest.raises(ValueError, match="between 0 and 1"):
         load_heatmap_points(path)
+
+
+def test_load_heatmap_rejects_missing_required_columns(tmp_path: Path):
+    path = tmp_path / "heatmap.csv"
+    path.write_text("time,value\n12,0.8\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="heatmap rows must include columns"):
+        load_heatmap_points(path)
+
+
+def test_load_heatmap_rejects_invalid_score_value(tmp_path: Path):
+    path = tmp_path / "heatmap.csv"
+    path.write_text("second,score\n12,hot\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="heatmap row 1 score must be a number"):
+        load_heatmap_points(path)

@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from editflow.ingest.chat import load_chat_buckets
 
 
@@ -34,3 +36,19 @@ def test_load_chat_json_groups_messages_by_second(tmp_path: Path):
 
     assert len(buckets) == 1
     assert buckets[0].messages == ["ㅋㅋ", "나이스"]
+
+
+def test_load_chat_rejects_missing_required_columns(tmp_path: Path):
+    path = tmp_path / "chat.csv"
+    path.write_text("time,text\n10,ㅋㅋㅋ\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="chat rows must include columns"):
+        load_chat_buckets(path)
+
+
+def test_load_chat_rejects_invalid_second_value(tmp_path: Path):
+    path = tmp_path / "chat.csv"
+    path.write_text("second,message\nlater,ㅋㅋㅋ\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="chat row 1 second must be an integer"):
+        load_chat_buckets(path)

@@ -1,5 +1,8 @@
 """Tests for marker export, pipeline orchestration, and API integration."""
 
+import pytest
+from fastapi import HTTPException
+
 from editflow.api import AnalyzeRequest, analyze, api
 from editflow.exporters.csv_report import build_marker_csv
 from editflow.exporters.premiere_xml import build_premiere_xml
@@ -119,3 +122,18 @@ def test_api_analyze_endpoint_accepts_marker_limit_settings():
 
     assert result.marker_count == 1
     assert result.markers[0].second == 10
+
+
+def test_api_analyze_endpoint_returns_bad_request_for_invalid_input():
+    with pytest.raises(HTTPException) as error:
+        analyze(
+            AnalyzeRequest(
+                chat_text="time,text\n10,ㅋㅋ\n",
+                chat_filename="chat.csv",
+                heatmap_text=HEATMAP_TEXT,
+                heatmap_filename="heatmap.csv",
+            )
+        )
+
+    assert error.value.status_code == 400
+    assert "chat rows must include columns" in error.value.detail

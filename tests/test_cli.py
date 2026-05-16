@@ -79,3 +79,28 @@ def test_analyze_command_accepts_marker_limit_options(tmp_path):
     assert "Generated 1 markers" in result.output
     assert "10,S,purple" in csv_text
     assert "40,A,red" not in csv_text
+
+
+def test_analyze_command_reports_invalid_input_without_traceback(tmp_path):
+    chat_path = tmp_path / "chat.csv"
+    heatmap_path = tmp_path / "heatmap.csv"
+    output_dir = tmp_path / "out"
+    chat_path.write_text("time,text\n10,ㅋㅋ\n", encoding="utf-8")
+    heatmap_path.write_text(HEATMAP_TEXT, encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "analyze",
+            "--chat",
+            str(chat_path),
+            "--heatmap",
+            str(heatmap_path),
+            "--out",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "chat rows must include columns" in result.output
+    assert "Traceback" not in result.output

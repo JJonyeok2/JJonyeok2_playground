@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -66,21 +66,25 @@ def health() -> dict[str, str]:
 @api.post("/analyze", response_model=AnalyzeResponse)
 def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     """Run marker analysis and return markers plus export texts."""
-    result = run_analysis_from_text(
-        chat_text=request.chat_text,
-        chat_filename=request.chat_filename,
-        heatmap_text=request.heatmap_text,
-        heatmap_filename=request.heatmap_filename,
-        settings=AnalysisSettings(
-            fps=request.fps,
-            min_messages=request.min_messages,
-            min_laughs=request.min_laughs,
-            min_heatmap_score=request.min_heatmap_score,
-            overlap_seconds=request.overlap_seconds,
-            max_markers=request.max_markers,
-            min_marker_gap_seconds=request.min_marker_gap_seconds,
-        ),
-    )
+    try:
+        result = run_analysis_from_text(
+            chat_text=request.chat_text,
+            chat_filename=request.chat_filename,
+            heatmap_text=request.heatmap_text,
+            heatmap_filename=request.heatmap_filename,
+            settings=AnalysisSettings(
+                fps=request.fps,
+                min_messages=request.min_messages,
+                min_laughs=request.min_laughs,
+                min_heatmap_score=request.min_heatmap_score,
+                overlap_seconds=request.overlap_seconds,
+                max_markers=request.max_markers,
+                min_marker_gap_seconds=request.min_marker_gap_seconds,
+            ),
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
     return AnalyzeResponse(
         marker_count=result.marker_count,
         markers=[

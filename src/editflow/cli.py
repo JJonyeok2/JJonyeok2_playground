@@ -101,20 +101,25 @@ def analyze(  # noqa: PLR0913
     min_marker_gap_seconds: int = MIN_MARKER_GAP_SECONDS_OPTION,
 ) -> None:
     """Analyze chat and replay heatmap files, then write Premiere XML and CSV."""
-    result = run_pipeline(
-        chat_path=chat,
-        heatmap_path=heatmap,
-        output_dir=out,
-        settings=AnalysisSettings(
-            fps=fps,
-            min_messages=min_messages,
-            min_laughs=min_laughs,
-            min_heatmap_score=min_heatmap_score,
-            overlap_seconds=overlap_seconds,
-            max_markers=max_markers,
-            min_marker_gap_seconds=min_marker_gap_seconds,
-        ),
-    )
+    try:
+        result = run_pipeline(
+            chat_path=chat,
+            heatmap_path=heatmap,
+            output_dir=out,
+            settings=AnalysisSettings(
+                fps=fps,
+                min_messages=min_messages,
+                min_laughs=min_laughs,
+                min_heatmap_score=min_heatmap_score,
+                overlap_seconds=overlap_seconds,
+                max_markers=max_markers,
+                min_marker_gap_seconds=min_marker_gap_seconds,
+            ),
+        )
+    except ValueError as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
     typer.echo(f"Generated {result.marker_count} markers")
     typer.echo(f"Premiere XML: {result.xml_path}")
     typer.echo(f"CSV report: {result.csv_path}")
