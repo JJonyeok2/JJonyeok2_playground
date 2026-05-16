@@ -77,7 +77,7 @@ def test_analyze_command_accepts_marker_limit_options(tmp_path):
 
     assert result.exit_code == 0, result.output
     assert "Generated 1 markers" in result.output
-    assert "10,S,purple" in csv_text
+    assert "10,00:00:10:00,S,purple" in csv_text
     assert "40,A,red" not in csv_text
 
 

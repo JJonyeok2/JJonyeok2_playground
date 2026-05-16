@@ -86,7 +86,7 @@ def run_analysis(
     return AnalysisResult(
         markers=selected_markers,
         xml_text=build_premiere_xml(selected_markers, fps=resolved_settings.fps),
-        csv_text=build_marker_csv(selected_markers),
+        csv_text=build_marker_csv(selected_markers, fps=resolved_settings.fps),
     )
 
 
@@ -115,16 +115,17 @@ def run_pipeline(
     settings: AnalysisSettings | None = None,
 ) -> PipelineResult:
     """Run analysis from local files and write Premiere XML and CSV outputs."""
+    resolved_settings = settings or AnalysisSettings(fps=fps)
     analysis = run_analysis(
         chat_buckets=load_chat_buckets(chat_path),
         heatmap_points=load_heatmap_points(heatmap_path),
-        settings=settings or AnalysisSettings(fps=fps),
+        settings=resolved_settings,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     xml_path = output_dir / "editflow_markers.xml"
     csv_path = output_dir / "editflow_markers.csv"
     xml_path.write_text(analysis.xml_text, encoding="utf-8")
-    write_marker_csv(analysis.markers, csv_path)
+    write_marker_csv(analysis.markers, csv_path, fps=resolved_settings.fps)
     return PipelineResult(
         markers=analysis.markers,
         xml_text=analysis.xml_text,

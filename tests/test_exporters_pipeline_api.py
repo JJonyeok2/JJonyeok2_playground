@@ -31,7 +31,7 @@ def test_build_premiere_xml_contains_sequence_markers():
 
 def test_build_marker_csv_outputs_sidecar_report():
     marker = Marker.from_grade(
-        second=10,
+        second=65,
         grade=MarkerGrade.A,
         evidence=["chat_peak"],
         confidence=0.8,
@@ -39,8 +39,8 @@ def test_build_marker_csv_outputs_sidecar_report():
 
     csv_text = build_marker_csv([marker])
 
-    assert "second,grade,color,title,memo,evidence,confidence" in csv_text
-    assert "10,A,red,A급 채팅 피크" in csv_text
+    assert "second,timecode,grade,color,title,memo,evidence,confidence" in csv_text
+    assert "65,00:01:05:00,A,red,A급 채팅 피크" in csv_text
 
 
 def test_run_analysis_from_text_returns_markers_and_export_text():
