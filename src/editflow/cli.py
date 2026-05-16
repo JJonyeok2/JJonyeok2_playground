@@ -144,3 +144,7 @@ def analyze(  # noqa: PLR0913
 def main() -> None:
     """Console script entry point."""
     app()
+
+
+if __name__ == "__main__":
+    main()
