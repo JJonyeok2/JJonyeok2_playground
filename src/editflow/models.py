@@ -34,6 +34,14 @@ class HeatmapPoint:
             raise ValueError(message)
 
 
+@dataclass(frozen=True)
+class Peak:
+    """Detected evidence peak from chat or replay heatmap data."""
+    second: int
+    source: str
+    strength: float
+
+
 class MarkerGrade(Enum):
     """Marker grade enumeration."""
     S = "S"
