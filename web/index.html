@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EditFlow Workbench</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="workspace">
+      <aside class="left-panel" aria-label="Input and analysis settings">
+        <header class="brand-row">
+          <div>
+            <h1>EditFlow</h1>
+            <p>Premiere marker workbench</p>
+          </div>
+          <span class="status-pill" id="statusPill">Ready</span>
+        </header>
+
+        <section class="panel-section">
+          <h2>Sources</h2>
+          <label class="file-control">
+            <span>Video</span>
+            <input id="videoInput" type="file" accept="video/*" />
+          </label>
+          <label class="file-control">
+            <span>Chat CSV/JSON</span>
+            <input id="chatInput" type="file" accept=".csv,.json,application/json,text/csv" />
+          </label>
+          <label class="file-control">
+            <span>Heatmap CSV/JSON</span>
+            <input id="heatmapInput" type="file" accept=".csv,.json,application/json,text/csv" />
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h2>Analysis</h2>
+          <div class="field-grid">
+            <label>
+              Min messages
+              <input id="minMessages" type="number" min="1" value="3" />
+            </label>
+            <label>
+              Min laughs
+              <input id="minLaughs" type="number" min="1" value="2" />
+            </label>
+            <label>
+              Heatmap score
+              <input id="minHeatmapScore" type="number" min="0" max="1" step="0.01" value="0.75" />
+            </label>
+            <label>
+              Overlap sec
+              <input id="overlapSeconds" type="number" min="0" value="5" />
+            </label>
+          </div>
+          <button id="analyzeButton" class="primary-button" type="button">Analyze markers</button>
+        </section>
+
+        <section class="panel-section compact">
+          <h2>Export</h2>
+          <button id="exportXmlButton" type="button" disabled>Premiere XML</button>
+          <button id="exportCsvButton" type="button" disabled>CSV report</button>
+        </section>
+      </aside>
+
+      <section class="video-stage" aria-label="Video preview and marker timeline">
+        <div class="stage-toolbar">
+          <div>
+            <h2>Review timeline</h2>
+            <p id="projectSummary">Upload video, chat, and heatmap data to begin.</p>
+          </div>
+          <div class="legend">
+            <span><i class="dot grade-s"></i>S overlap</span>
+            <span><i class="dot grade-a"></i>A chat</span>
+            <span><i class="dot grade-b"></i>B heatmap</span>
+          </div>
+        </div>
+
+        <video id="videoPreview" controls preload="metadata"></video>
+        <div id="timeline" class="timeline" aria-label="Detected marker timeline"></div>
+      </section>
+
+      <aside class="right-panel" aria-label="Detected markers">
+        <header class="panel-header">
+          <h2>Markers</h2>
+          <span id="markerCount">0</span>
+        </header>
+        <div class="table-wrap">
+          <table id="markerTable">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Grade</th>
+                <th>Evidence</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="markerRows">
+              <tr>
+                <td colspan="4" class="empty-state">No markers yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <section class="marker-detail" id="markerDetail">
+          <h3>Selected marker</h3>
+          <p>Click a marker after analysis to inspect its memo and jump the video.</p>
+        </section>
+      </aside>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
