@@ -104,12 +104,13 @@ def run_pipeline(
     heatmap_path: Path,
     output_dir: Path,
     fps: int = 30,
+    settings: AnalysisSettings | None = None,
 ) -> PipelineResult:
     """Run analysis from local files and write Premiere XML and CSV outputs."""
     analysis = run_analysis(
         chat_buckets=load_chat_buckets(chat_path),
         heatmap_points=load_heatmap_points(heatmap_path),
-        settings=AnalysisSettings(fps=fps),
+        settings=settings or AnalysisSettings(fps=fps),
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     xml_path = output_dir / "editflow_markers.xml"
