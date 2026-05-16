@@ -1,5 +1,7 @@
 """Tests for marker export, pipeline orchestration, and API integration."""
 
+import json
+
 import pytest
 from fastapi import HTTPException
 
@@ -7,7 +9,7 @@ from editflow.api import AnalyzeRequest, analyze, api
 from editflow.exporters.csv_report import build_marker_csv
 from editflow.exporters.premiere_xml import build_premiere_xml
 from editflow.models import Marker, MarkerGrade
-from editflow.pipeline import AnalysisSettings, run_analysis_from_text
+from editflow.pipeline import AnalysisSettings, run_analysis_from_text, run_pipeline
 
 CHAT_TEXT = "second,message\n10,ㅋㅋ\n10,ㅋㅋㅋ\n10,미쳤다\n"
 HEATMAP_TEXT = "second,score\n11,0.9\n"
@@ -133,6 +135,28 @@ def test_run_analysis_from_text_applies_xml_window_settings():
 
     assert "<in>240</in>" in result.xml_text
     assert "<out>390</out>" in result.xml_text
+
+
+def test_run_pipeline_writes_manifest_file(tmp_path):
+    chat_path = tmp_path / "chat.csv"
+    heatmap_path = tmp_path / "heatmap.csv"
+    output_dir = tmp_path / "out"
+    chat_path.write_text(CHAT_TEXT, encoding="utf-8")
+    heatmap_path.write_text(HEATMAP_TEXT, encoding="utf-8")
+
+    result = run_pipeline(
+        chat_path=chat_path,
+        heatmap_path=heatmap_path,
+        output_dir=output_dir,
+        settings=AnalysisSettings(max_markers=10),
+    )
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+
+    assert result.manifest_path == output_dir / "editflow_manifest.json"
+    assert manifest["marker_count"] == 1
+    assert manifest["outputs"]["premiere_xml"] == "editflow_markers.xml"
+    assert manifest["outputs"]["csv_report"] == "editflow_markers.csv"
+    assert manifest["settings"]["max_markers"] == 10
 
 
 def test_api_analyze_endpoint_accepts_uploaded_file_texts():

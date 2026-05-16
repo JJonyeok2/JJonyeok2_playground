@@ -147,6 +147,7 @@ def analyze(  # noqa: PLR0913
     typer.echo(f"Generated {result.marker_count} markers")
     typer.echo(f"Premiere XML: {result.xml_path}")
     typer.echo(f"CSV report: {result.csv_path}")
+    typer.echo(f"Manifest: {result.manifest_path}")
 
 
 def main() -> None:

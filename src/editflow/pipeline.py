@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
 from editflow.analysis.markers import build_markers
 from editflow.analysis.peaks import detect_chat_peaks, detect_heatmap_peaks
 from editflow.analysis.postprocess import select_markers
 from editflow.exporters.csv_report import build_marker_csv, write_marker_csv
+from editflow.exporters.manifest import write_manifest
 from editflow.exporters.premiere_xml import build_premiere_xml
 from editflow.ingest.chat import load_chat_buckets, load_chat_buckets_from_text
 from editflow.ingest.heatmap import (
@@ -57,6 +58,7 @@ class PipelineResult(AnalysisResult):
 
     xml_path: Path
     csv_path: Path
+    manifest_path: Path
 
 
 def run_analysis(
@@ -134,12 +136,21 @@ def run_pipeline(
     output_dir.mkdir(parents=True, exist_ok=True)
     xml_path = output_dir / "editflow_markers.xml"
     csv_path = output_dir / "editflow_markers.csv"
+    manifest_path = output_dir / "editflow_manifest.json"
     xml_path.write_text(analysis.xml_text, encoding="utf-8")
     write_marker_csv(analysis.markers, csv_path, fps=resolved_settings.fps)
+    write_manifest(
+        path=manifest_path,
+        marker_count=analysis.marker_count,
+        xml_path=xml_path,
+        csv_path=csv_path,
+        settings=asdict(resolved_settings),
+    )
     return PipelineResult(
         markers=analysis.markers,
         xml_text=analysis.xml_text,
         csv_text=analysis.csv_text,
         xml_path=xml_path,
         csv_path=csv_path,
+        manifest_path=manifest_path,
     )

@@ -32,13 +32,16 @@ def test_analyze_command_writes_premiere_xml_and_csv(tmp_path):
 
     xml_path = output_dir / "editflow_markers.xml"
     csv_path = output_dir / "editflow_markers.csv"
+    manifest_path = output_dir / "editflow_manifest.json"
 
     assert result.exit_code == 0, result.output
     assert "Generated 1 markers" in result.output
     assert str(xml_path) in result.output
     assert str(csv_path) in result.output
+    assert str(manifest_path) in result.output
     assert "<xmeml" in xml_path.read_text(encoding="utf-8")
     assert "S급 하이라이트" in csv_path.read_text(encoding="utf-8")
+    assert manifest_path.exists()
 
 
 def test_analyze_command_accepts_marker_limit_options(tmp_path):

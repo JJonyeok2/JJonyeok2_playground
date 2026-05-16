@@ -61,6 +61,7 @@ Outputs:
 
 - `outputs/editflow_markers.xml`
 - `outputs/editflow_markers.csv`
+- `outputs/editflow_manifest.json`
 
 The package entry point is also configured as `editflow` after installation.
 
