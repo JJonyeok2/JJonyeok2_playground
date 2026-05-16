@@ -5,19 +5,25 @@ from __future__ import annotations
 import csv
 import json
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from editflow.models import ChatBucket
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def load_chat_buckets(path: Path) -> list[ChatBucket]:
     """Load chat rows from CSV or JSON and group them by second."""
+    return _rows_to_buckets(_read_rows(path))
+
+
+def load_chat_buckets_from_text(text: str, filename: str) -> list[ChatBucket]:
+    """Load chat rows from uploaded CSV or JSON text."""
+    return _rows_to_buckets(_read_rows_from_text(text, filename))
+
+
+def _rows_to_buckets(rows: list[dict[str, object]]) -> list[ChatBucket]:
     grouped: dict[int, list[str]] = defaultdict(list)
 
-    for row in _read_rows(path):
+    for row in rows:
         second = int(row["second"])
         message = str(row["message"]).strip()
         if message:
@@ -30,13 +36,16 @@ def load_chat_buckets(path: Path) -> list[ChatBucket]:
 
 
 def _read_rows(path: Path) -> list[dict[str, object]]:
-    suffix = path.suffix.lower()
+    text = path.read_text(encoding="utf-8")
+    return _read_rows_from_text(text, path.name)
+
+
+def _read_rows_from_text(text: str, filename: str) -> list[dict[str, object]]:
+    suffix = Path(filename).suffix.lower()
     if suffix == ".csv":
-        with path.open("r", encoding="utf-8", newline="") as file:
-            return list(csv.DictReader(file))
+        return list(csv.DictReader(text.splitlines()))
     if suffix == ".json":
-        with path.open("r", encoding="utf-8") as file:
-            data = json.load(file)
+        data = json.loads(text)
         if not isinstance(data, list):
             message = "chat JSON must be a list of objects"
             raise ValueError(message)

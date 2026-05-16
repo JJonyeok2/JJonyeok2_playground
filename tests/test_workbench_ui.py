@@ -52,6 +52,23 @@ def test_workbench_script_supports_local_analysis_and_exports():
     assert "<xmeml" in script
 
 
+def test_workbench_script_calls_backend_analysis_api_with_fallback():
+    script = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+
+    required_backend_hooks = [
+        "const API_BASE_URL",
+        "async function requestBackendAnalysis",
+        "function applyBackendResult",
+        "function runLocalAnalysis",
+        "fetch(`${API_BASE_URL}/analyze`",
+    ]
+
+    for hook in required_backend_hooks:
+        assert hook in script
+
+    assert 'const API_BASE_URL = "http://127.0.0.1:8000";' in script
+
+
 def test_workbench_styles_use_dense_panels_not_landing_sections():
     styles = (ROOT / "web" / "styles.css").read_text(encoding="utf-8")
 

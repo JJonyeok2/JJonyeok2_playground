@@ -1,8 +1,16 @@
+const API_BASE_URL = "http://127.0.0.1:8000";
+
 const state = {
   videoUrl: "",
   chatRows: [],
+  chatText: "",
+  chatFileName: "",
   heatmapRows: [],
+  heatmapText: "",
+  heatmapFileName: "",
   markers: [],
+  csvText: "",
+  xmlText: "",
   duration: 0,
 };
 
@@ -49,11 +57,17 @@ const elements = {
 
 elements.videoInput.addEventListener("change", handleVideoUpload);
 elements.chatInput.addEventListener("change", async (event) => {
-  state.chatRows = await parseDataFile(event.target.files[0]);
+  const data = await readDataFile(event.target.files[0]);
+  state.chatRows = data.rows;
+  state.chatText = data.text;
+  state.chatFileName = data.filename;
   updateSummary();
 });
 elements.heatmapInput.addEventListener("change", async (event) => {
-  state.heatmapRows = await parseDataFile(event.target.files[0]);
+  const data = await readDataFile(event.target.files[0]);
+  state.heatmapRows = data.rows;
+  state.heatmapText = data.text;
+  state.heatmapFileName = data.filename;
   updateSummary();
 });
 elements.analyzeButton.addEventListener("click", runAnalysis);
@@ -66,18 +80,35 @@ elements.videoPreview.addEventListener("loadedmetadata", () => {
 });
 
 async function parseDataFile(file) {
+  const data = await readDataFile(file);
+  return data.rows;
+}
+
+async function readDataFile(file) {
   if (!file) {
-    return [];
+    return { rows: [], text: "", filename: "" };
   }
   const text = await file.text();
-  if (file.name.toLowerCase().endsWith(".json")) {
+  return {
+    rows: parseDataText(text, file.name),
+    text,
+    filename: file.name,
+  };
+}
+
+function parseDataText(text, filename) {
+  if (filename.toLowerCase().endsWith(".json")) {
     return JSON.parse(text);
   }
   return parseCsv(text);
 }
 
 function parseCsv(text) {
-  const [headerLine, ...lines] = text.trim().split(/\r?\n/);
+  const normalizedText = text.trim();
+  if (!normalizedText) {
+    return [];
+  }
+  const [headerLine, ...lines] = normalizedText.split(/\r?\n/);
   const headers = headerLine.split(",").map((header) => header.trim());
   return lines
     .filter(Boolean)
@@ -170,7 +201,76 @@ function findNearestPeak(reference, candidates, overlapSeconds) {
     .sort((left, right) => Math.abs(left.second - reference.second) - Math.abs(right.second - reference.second))[0];
 }
 
-function runAnalysis() {
+async function runAnalysis() {
+  elements.analyzeButton.disabled = true;
+  elements.statusPill.textContent = "Analyzing";
+
+  try {
+    const result = await requestBackendAnalysis();
+    applyBackendResult(result);
+    elements.statusPill.textContent = "API analyzed";
+  } catch (error) {
+    console.warn("EditFlow API unavailable. Falling back to browser analysis.", error);
+    runLocalAnalysis();
+    elements.statusPill.textContent = "Local analyzed";
+  } finally {
+    elements.analyzeButton.disabled = false;
+  }
+}
+
+async function requestBackendAnalysis() {
+  if (!state.chatText || !state.heatmapText) {
+    throw new Error("Chat and heatmap data are required.");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_text: state.chatText,
+      chat_filename: state.chatFileName || "chat.csv",
+      heatmap_text: state.heatmapText,
+      heatmap_filename: state.heatmapFileName || "heatmap.csv",
+      fps: 30,
+      min_messages: Number(elements.minMessages.value),
+      min_laughs: Number(elements.minLaughs.value),
+      min_heatmap_score: Number(elements.minHeatmapScore.value),
+      overlap_seconds: Number(elements.overlapSeconds.value),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`EditFlow API returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
+function applyBackendResult(result) {
+  state.markers = result.markers.map(normalizeBackendMarker);
+  state.xmlText = result.xml_text || buildPremiereXmlText(state.markers);
+  state.csvText = result.csv_text || buildCsvText(state.markers);
+  renderAnalysisResult();
+}
+
+function normalizeBackendMarker(marker) {
+  const grade = String(marker.grade || "B").toUpperCase();
+  const meta = gradeMeta[grade] || gradeMeta.B;
+  return {
+    second: Number(marker.second),
+    grade,
+    color: marker.color || meta.color,
+    className: meta.className,
+    title: marker.title || meta.title,
+    memo: marker.memo || meta.memo,
+    evidence: Array.isArray(marker.evidence) ? marker.evidence : [],
+    confidence: Number(marker.confidence || 0),
+  };
+}
+
+function runLocalAnalysis() {
   const chatPeaks = detectChatPeaks(
     state.chatRows,
     Number(elements.minMessages.value),
@@ -182,11 +282,16 @@ function runAnalysis() {
   );
 
   state.markers = buildMarkers(chatPeaks, heatmapPeaks, Number(elements.overlapSeconds.value));
+  state.xmlText = buildPremiereXmlText(state.markers);
+  state.csvText = buildCsvText(state.markers);
+  renderAnalysisResult();
+}
+
+function renderAnalysisResult() {
   renderTimeline();
   renderMarkerTable();
   elements.exportXmlButton.disabled = state.markers.length === 0;
   elements.exportCsvButton.disabled = state.markers.length === 0;
-  elements.statusPill.textContent = "Analyzed";
 }
 
 function renderTimeline() {
@@ -237,9 +342,13 @@ function selectMarker(marker) {
 }
 
 function exportMarkersAsCsv() {
+  downloadText("editflow_markers.csv", state.csvText || buildCsvText(state.markers));
+}
+
+function buildCsvText(markers) {
   const rows = [
     ["second", "timecode", "grade", "title", "evidence", "confidence"],
-    ...state.markers.map((marker) => [
+    ...markers.map((marker) => [
       marker.second,
       formatTime(marker.second),
       marker.grade,
@@ -248,29 +357,30 @@ function exportMarkersAsCsv() {
       marker.confidence,
     ]),
   ];
-  downloadText("editflow_markers.csv", rows.map((row) => row.join(",")).join("\n"));
+  return rows.map((row) => row.map(escapeCsvValue).join(",")).join("\n");
 }
 
 function exportMarkersAsXml() {
-  const markers = state.markers
+  downloadText("editflow_premiere_markers.xml", state.xmlText || buildPremiereXmlText(state.markers));
+}
+
+function buildPremiereXmlText(markerRows) {
+  const markers = markerRows
     .map((marker) => `
       <marker>
-        <name>${escapeXml(marker.title)}</name>
+        <name>[${escapeXml(marker.color.toUpperCase())}] ${escapeXml(marker.title)}</name>
         <comment>${escapeXml(marker.memo)}</comment>
         <in>${Math.round(marker.second * 30)}</in>
         <out>${Math.round(marker.second * 30) + 1}</out>
       </marker>`)
     .join("");
 
-  downloadText(
-    "editflow_premiere_markers.xml",
-    `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <xmeml version="5">
   <sequence id="editflow-premiere-sequence">
     <name>EditFlow Premiere Pro Markers</name>${markers}
   </sequence>
-</xmeml>`,
-  );
+</xmeml>`;
 }
 
 function handleVideoUpload(event) {
@@ -304,6 +414,14 @@ function escapeXml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function escapeCsvValue(value) {
+  const text = String(value);
+  if (!/[",\n]/.test(text)) {
+    return text;
+  }
+  return `"${text.replaceAll('"', '""')}"`;
 }
 
 function downloadText(filename, text) {
