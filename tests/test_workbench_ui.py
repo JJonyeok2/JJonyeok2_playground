@@ -37,6 +37,34 @@ def test_workbench_has_editor_focused_layout():
     assert '<script type="module" src="./src/main.js"></script>' in html
 
 
+def test_workbench_hides_tuning_controls_in_collapsed_advanced_panel():
+    html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+
+    details_start = html.index('<details class="advanced-settings">')
+    details_end = html.index("</details>", details_start)
+    advanced_markup = html[details_start:details_end]
+    button_position = html.index('id="analyzeButton"')
+
+    assert button_position < details_start
+    assert '<details class="advanced-settings" open>' not in html
+    assert "<summary>Advanced</summary>" in advanced_markup
+
+    advanced_ids = [
+        'id="minMessages"',
+        'id="minLaughs"',
+        'id="minHeatmapScore"',
+        'id="overlapSeconds"',
+        'id="peakMergeSeconds"',
+        'id="maxMarkers"',
+        'id="minMarkerGapSeconds"',
+        'id="preRollSeconds"',
+        'id="markerDurationSeconds"',
+    ]
+
+    for element_id in advanced_ids:
+        assert element_id in advanced_markup
+
+
 def test_workbench_uses_modular_frontend_scripts():
     module_exports = {
         "web/src/api.js": [

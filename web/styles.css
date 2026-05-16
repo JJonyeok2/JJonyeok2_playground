@@ -172,6 +172,23 @@ button:disabled {
   font-weight: 700;
 }
 
+.advanced-settings {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.advanced-settings summary {
+  padding-top: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.advanced-settings .field-grid {
+  margin-top: 2px;
+}
+
 .video-stage {
   display: grid;
   grid-template-rows: auto minmax(320px, 1fr) 92px;
