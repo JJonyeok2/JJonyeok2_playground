@@ -161,6 +161,40 @@ http://127.0.0.1:8766/index.html
 UI의 기본 화면은 업로드와 분석 실행만 노출합니다. 세부 튜닝 값은
 `Advanced` 패널 안에 숨겨져 있으며, 필요할 때만 열어 조정합니다.
 
+## Pexels 데모 데이터
+
+Pexels 영상으로 데모할 때는 10~20초 길이의 액션성 있는 짧은 영상을
+추천합니다. 스케이트보드 트릭, 스트리트 댄스, 농구 덩크, 파쿠르처럼
+시각적 피크가 분명한 영상이 좋습니다. 이런 영상은 채팅 반응과 히트맵
+피크를 가짜로 만들어도 결과가 자연스럽게 보입니다.
+
+추천 검색어:
+
+- `skateboard trick`
+- `street dance`
+- `basketball dunk`
+- `parkour`
+
+데모용 샘플 데이터는 14초 안팎의 짧은 액션 영상에 맞춰 준비되어 있습니다.
+
+- `examples/pexels_action_chat.csv`
+- `examples/pexels_action_heatmap.csv`
+
+사용 흐름:
+
+```text
+1. Pexels에서 10~20초 액션 영상을 다운로드
+2. Workbench UI의 Video에 영상 업로드
+3. Chat에 examples/pexels_action_chat.csv 업로드
+4. Heatmap에 examples/pexels_action_heatmap.csv 업로드
+5. Advanced에서 Overlap sec를 1, Min gap sec를 2, Marker length를 2로 조정
+6. Analyze markers 실행
+7. Premiere XML 또는 CSV report export
+```
+
+영상 파일은 용량과 라이선스 관리를 위해 저장소에 포함하지 않습니다.
+샘플 CSV만 저장소에 두고, 영상은 로컬에서 직접 받아서 업로드합니다.
+
 ## 프로젝트 구조
 
 ```text
