@@ -29,6 +29,7 @@ const elements = {
   markerDetail: document.getElementById("markerDetail"),
   projectSummary: document.getElementById("projectSummary"),
   statusPill: document.getElementById("statusPill"),
+  analysisFeedback: document.getElementById("analysisFeedback"),
 };
 
 elements.videoInput.addEventListener("change", handleVideoUpload);
@@ -38,6 +39,7 @@ elements.chatInput.addEventListener("change", async (event) => {
   state.chatText = data.text;
   state.chatFileName = data.filename;
   updateSummary(elements, state);
+  updateAnalysisReadiness();
 });
 elements.heatmapInput.addEventListener("change", async (event) => {
   const data = await readDataFile(event.target.files[0]);
@@ -45,6 +47,7 @@ elements.heatmapInput.addEventListener("change", async (event) => {
   state.heatmapText = data.text;
   state.heatmapFileName = data.filename;
   updateSummary(elements, state);
+  updateAnalysisReadiness();
 });
 elements.analyzeButton.addEventListener("click", runAnalysis);
 elements.exportCsvButton.addEventListener("click", () => exportMarkersAsCsv(state));
@@ -56,6 +59,12 @@ elements.videoPreview.addEventListener("loadedmetadata", () => {
 });
 
 async function runAnalysis() {
+  if (!hasReactionData()) {
+    elements.statusPill.textContent = "Waiting";
+    updateAnalysisReadiness();
+    return;
+  }
+
   elements.analyzeButton.disabled = true;
   elements.statusPill.textContent = "Analyzing";
   const settings = collectAnalysisSettings();
@@ -70,8 +79,28 @@ async function runAnalysis() {
     elements.statusPill.textContent = "Local analyzed";
   } finally {
     renderAnalysisResult(elements, state);
-    elements.analyzeButton.disabled = false;
+    updateAnalysisReadiness();
   }
+}
+
+function hasReactionData() {
+  return state.chatRows.length > 0 && state.heatmapRows.length > 0;
+}
+
+function updateAnalysisReadiness() {
+  elements.analyzeButton.disabled = !hasReactionData();
+  if (hasReactionData()) {
+    elements.analysisFeedback.textContent = "Ready to analyze.";
+    return;
+  }
+
+  if (state.chatRows.length === 0 && state.heatmapRows.length === 0) {
+    elements.analysisFeedback.textContent = "Upload chat and heatmap files before analyzing.";
+    return;
+  }
+
+  elements.analysisFeedback.textContent =
+    state.chatRows.length === 0 ? "Upload chat file before analyzing." : "Upload heatmap file before analyzing.";
 }
 
 function collectAnalysisSettings() {
@@ -108,3 +137,5 @@ function handleVideoUpload(event) {
   elements.videoPreview.src = state.videoUrl;
   updateSummary(elements, state);
 }
+
+updateAnalysisReadiness();

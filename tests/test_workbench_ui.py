@@ -143,6 +143,18 @@ def test_workbench_scripts_keep_backend_fallback_and_premiere_exports():
     assert "<xmeml" in exporter_script
 
 
+def test_workbench_blocks_analysis_until_reaction_data_is_loaded():
+    html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    main_script = (ROOT / "web" / "src" / "main.js").read_text(encoding="utf-8")
+
+    assert 'id="analysisFeedback"' in html
+    assert 'id="analyzeButton" class="primary-button" type="button" disabled' in html
+    assert "function hasReactionData()" in main_script
+    assert "function updateAnalysisReadiness()" in main_script
+    assert "Upload chat and heatmap files before analyzing." in main_script
+    assert "elements.analyzeButton.disabled = !hasReactionData()" in main_script
+
+
 def test_workbench_styles_use_dense_panels_not_landing_sections():
     styles = (ROOT / "web" / "styles.css").read_text(encoding="utf-8")
 
