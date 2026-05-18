@@ -34,7 +34,7 @@ def test_workbench_has_editor_focused_layout():
 
     assert "Premiere XML" in html
     assert "Final Cut" not in html
-    assert '<script type="module" src="./src/main.js"></script>' in html
+    assert '<script type="module" src="./src/main.js?v=' in html
 
 
 def test_workbench_hides_tuning_controls_in_collapsed_advanced_panel():
